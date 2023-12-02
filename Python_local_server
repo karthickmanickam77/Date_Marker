@@ -1,0 +1,83 @@
+from flask import Flask, request, jsonify
+from youtube_transcript_api import YouTubeTranscriptApi
+from dateutil import parser
+import datetime
+
+app = Flask(__name__)
+
+
+@app.route('/api', methods=['GET'])
+def generate_transcript():
+    d = {}
+    Query = str(request.args['Query'])
+    transcript = YouTubeTranscriptApi.get_transcript(Query)
+    script = ""
+
+    for text in transcript:
+        t = text["text"]
+        if t != '[Music]':
+            script += t + " "
+    d['Query'] = str(script)
+    return jsonify(d)
+
+@app.route('/ppi', methods=['GET'])
+def generate_dates():
+    d = {}
+    Query = str(request.args['Query'])
+    transcript = YouTubeTranscriptApi.get_transcript(Query)
+    script = ""
+
+    for text in transcript:
+        t = text["text"]
+        if t != '[Music]':
+            script += t + " "
+
+    # Split the script into individual words
+    words = script.split()
+
+    # Initialize an empty list to store the extracted dates
+    dates = []
+    # Iterate over the words and check if they match the format of a date
+
+    for word in script.split():
+        try:
+            date = parser.parse(word, fuzzy=True)
+            dates.append(date.strftime('%m/%d/%Y'))
+        except ValueError:
+            pass
+
+    d['Query'] = str(dates)
+    return jsonify(d)
+
+@app.route('/gpi', methods=['GET'])
+def generate_dis_dates():
+    d = {}
+    Query = str(request.args['Query'])
+    transcript = YouTubeTranscriptApi.get_transcript(Query)
+    script = ""
+
+    for text in transcript:
+        t = text["text"]
+        if t != '[Music]':
+            script += t + " "
+
+    # Split the script into individual words
+    words = script.split()
+
+    # Initialize an empty list to store the extracted dates
+    dates = []
+    # Iterate over the words and check if they match the format of a date
+
+    for word in script.split():
+        try:
+            date = parser.parse(word, fuzzy=True)
+            if date.year > 2023 and date.year < 2030:
+              dates.append(date.strftime('%m/%d/%Y'))
+        except ValueError:
+            pass
+    dis_dates=list(set(dates))
+    d['Query'] = str(dis_dates)
+    return jsonify(d)
+
+if __name__ == '__main__':
+    app.run()
